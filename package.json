@@ -1,0 +1,33 @@
+{
+  "name": "deploy-by-react-vite",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build:app": "vite build",
+    "build:site": "node scripts/build-site.mjs",
+    "validate:html": "html-validate \"dist/**/*.html\"",
+    "build": "npm run build:app && npm run build:site && npm run validate:html",
+    "preview": "vite preview --strictPort --port 5173"
+  },
+  "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "4.3.3",
+    "autoprefixer": "10.4.20",
+    "fs-extra": "11.2.0",
+    "glob": "11.0.0",
+    "gray-matter": "4.0.3",
+    "html-minifier-terser": "7.2.0",
+    "html-validate": "9.0.3",
+    "markdown-it": "14.1.0",
+    "postcss": "8.4.47",
+    "tailwindcss": "3.4.13",
+    "typograf": "7.4.1",
+    "vite": "5.4.8"
+  }
+}
+
