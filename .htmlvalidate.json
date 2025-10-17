@@ -1,9 +1,0 @@
-{
-  "extends": ["html-validate:recommended"],
-  "rules": {
-    "no-trailing-whitespace": "off",
-    "void-style": "omit",
-    "doctype-style": "lowercase"
-  }
-}
-
