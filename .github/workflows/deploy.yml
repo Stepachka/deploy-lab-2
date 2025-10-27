@@ -12,7 +12,7 @@ on:
 jobs:
   build:
     name: Build client
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Pull code to VM Github
@@ -32,7 +32,7 @@ jobs:
         run: npm run build
   test:
     name: Test client
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: build
     steps:
       - name: Test echo
@@ -40,7 +40,7 @@ jobs:
 
   run:
     name: Run client
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     needs: test
     steps:
       - name: Pull code to VM Github
@@ -57,4 +57,4 @@ jobs:
         run: npm ci
 
       - name: Run application
-        run: npm start
+        run: npm build
