@@ -3,21 +3,21 @@ name: React + Vite CI
 on:
   push:
     branches:
-    - main
+      - main
   pull_request:
     branches:
-    - main
+      - main
   workflow_dispatch:
 
-jobs: 
-  build: 
+jobs:
+  build:
     name: Build client
     runs-on: ubuntu-latest
 
-    steps: 
+    steps:
       - name: Pull code to VM Github
         uses: actions/checkout@v4
-        
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
@@ -31,12 +31,30 @@ jobs:
       - name: Build application
         run: npm run build
   test:
-    name: Test Client
+    name: Test client
     runs-on: ubuntu-latest
     needs: build
-    steps: 
+    steps:
       - name: Test echo
         run: echo 'Test success'
-     
 
-    
+  run:
+    name: Run client
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Pull code to VM Github
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "npm"
+          cache-dependency-path: "./package-lock.json"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run application
+        run: npm start
