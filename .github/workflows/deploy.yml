@@ -1,4 +1,4 @@
-name: React + Vite CI
+name: React + Vite CI/CD Pipeline
 
 on:
   push:
@@ -10,9 +10,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build client
-    runs-on: self-hosted
+  # 1. Job для сборки и тестов (CI)
+  build-and-test:
+    name: Build & Test Client
+    # 🛠️ ФИКС #1: Добавляем matrix, чтобы исправить ошибку синтаксиса
+    strategy:
+      matrix:
+        node-version: [20.x] # Используем одну стабильную версию для простоты
+
+    # 🛠️ FIX #2: Запускается на временной VM GitHub
+    runs-on: ubuntu-latest
 
     steps:
       - name: Pull code to VM Github
@@ -27,34 +34,53 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Run unit tests
+        run: npm test # Предполагаем, что у вас есть npm test
 
       - name: Build application
         run: npm run build
-  test:
-    name: Test client
-    runs-on: self-hosted
-    needs: build
-    steps:
-      - name: Test echo
-        run: echo 'Test success'
 
-  run:
-    name: Run client
-    runs-on: self-hosted
-    needs: test
-    steps:
-      - name: Pull code to VM Github
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+      # 🛠️ ФИКС #3: Сохраняем собранные файлы (папку dist) как Артефакт
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
-          node-version: ${{ matrix.node-version }}
-          cache: "npm"
-          cache-dependency-path: "./package-lock.json"
+          name: client-build-artifact
+          path: dist/ # Путь к вашей собранной папке
 
-      - name: Install dependencies
-        run: npm ci
+  # 2. Job для развертывания (CD)
+  deploy:
+    name: Deploy client to server
+    # ⚠️ КРИТИЧЕСКИЙ ФИКС: Эта задача должна выполняться на вашем сервере!
+    runs-on: self-hosted
 
-      - name: Run application
-        run: npm build
+    # ⚠️ ДОБАВЛЕНО: Запускаем только после успешных сборки и тестов
+    needs: [build-and-test]
+
+    steps:
+      # 🛠️ ФИКС #4: Скачиваем собранные файлы на наш раннер
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: client-build-artifact
+          path: ./app-to-deploy # Скачиваем в эту папку
+
+      # 🛠️ ФИКС #5: Используем PM2, чтобы запустить приложение в фоне и не блокировать раннер
+      - name: Deploy and Start with PM2
+        # Мы переходим в папку, где лежат наши файлы,
+        # устанавливаем PM2 и запускаем статический сервер
+        run: |
+          # 1. Установим PM2 и Serve, если их нет
+          npm install -g pm2 serve
+
+          # 2. Останавливаем и удаляем предыдущую версию приложения
+          pm2 delete client-app || true 
+
+          # 3. Переходим в папку с файлами (они скачаны в ./app-to-deploy)
+          # Папка 'dist' находится внутри 'app-to-deploy'
+          cd ./app-to-deploy
+
+          # 4. Запускаем статический сервер 'serve' для папки 'dist' через PM2
+          # -s dist означает "serve the contents of the dist folder"
+          # -l 3000 означает "listen on port 3000"
+          pm2 start serve --name "client-app" -- -s dist -l 3000
